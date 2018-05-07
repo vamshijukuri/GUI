@@ -1,0 +1,230 @@
+ADV JAVA[JDBC]
+------------------------
+Example to move cursor from one record position to another record position like Player with GUI Application:
+
+EmployeeFrame.java
+-------------------
+package com.durgasoft.gui;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
+import com.durgasoft.dto.Employee;
+import com.durgasoft.service.EmployeeService;
+
+import java.awt.Button;
+import java.awt.Color;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.Frame;
+import java.awt.Graphics;
+
+public class PlayerFrame extends Frame implements 
+ActionListener {
+Button first_Button, next_Button, previous_Button, 
+last_Button;
+Employee emp;
+EmployeeService empService;
+
+public PlayerFrame() {
+this.setVisible(true);
+this.setSize(700, 500);
+this.setTitle("Player Frame");
+this.setLayout(new FlowLayout());
+this.setBackground(Color.GREEN);
+this.addWindowListener(new WindowAdapter() {
+public void windowClosing
+(WindowEvent we) {
+System.exit(0);
+}
+});
+
+first_Button = new Button("First");
+next_Button = new Button("Next");
+previous_Button = new Button("Previous");
+last_Button = new Button("Last");
+
+first_Button.addActionListener(this);
+next_Button.addActionListener(this);
+previous_Button.addActionListener(this);
+last_Button.addActionListener(this);
+
+Font f = new Font("arial", Font.BOLD, 15);
+first_Button.setFont(f);
+next_Button.setFont(f);
+previous_Button.setFont(f);
+last_Button.setFont(f);
+
+this.add(first_Button);
+this.add(next_Button);
+this.add(previous_Button);
+this.add(last_Button);
+
+empService = new EmployeeService();
+}
+@Override
+public void actionPerformed(ActionEvent ae) {
+String label = ae.getActionCommand();
+emp = empService.getEmployee(label);
+repaint();
+}
+@Override
+public void paint(Graphics g) {
+Font font = new Font("arial", Font.BOLD, 
+30);
+g.setFont(font);
+if(emp != null) {
+g.drawString("Employee Number 
+:"+emp.getEno(), 50, 200);
+g.drawString("Employee Name 
+:"+emp.getEname(), 50, 250);
+g.drawString("Employee Salary 
+:"+emp.getEsal(), 50, 300);
+g.drawString("Employee 
+Address:"+emp.getEaddr(), 50, 350);
+}else {
+String message = 
+empService.getMessage();
+g.drawString(message, 50, 300);
+}
+}
+}
+
+EmployeeService.java
+---------------------
+package com.durgasoft.service;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
+
+import com.durgasoft.dto.Employee;
+
+public class EmployeeService {
+Connection con;
+Statement st;
+ResultSet rs;
+String message = "";
+boolean bol = true;
+
+Employee emp;
+public EmployeeService() {
+try {
+Class.forName
+("com.mysql.jdbc.Driver");
+con = DriverManager.getConnection
+("jdbc:mysql://localhost:3306/durgadb", "root", "root");
+st = con.createStatement
+(ResultSet.TYPE_SCROLL_SENSITIVE, 
+ResultSet.CONCUR_UPDATABLE);
+rs = st.executeQuery("select * from 
+emp1");
+} catch (Exception e) {
+e.printStackTrace();
+}
+}
+public Employee getEmployee(String label) {
+try {
+if(label.equals("First")) {
+rs.first();
+bol = true;
+}
+if(label.equals("Next")) {
+bol = rs.next();
+if(bol == false) {
+message = "No more 
+Records in Forward Direction";
+}else {
+//bol = false;
+message = "";
+}
+}
+if(label.equals("Previous")) {
+bol = rs.previous();
+if(bol == false) {
+message = "No more 
+Records in Backward Direction";
+}else {
+message = "";
+//bol = false;
+}
+}
+if(label.equals("Last")) {
+rs.last();
+bol = true;
+}
+
+if(bol==true) {
+emp = new Employee();
+emp.setEno(rs.getInt
+("ENO"));
+emp.setEname(rs.getString
+("ENAME"));
+emp.setEsal(rs.getFloat
+("ESAL"));
+emp.setEaddr(rs.getString
+("EADDR"));
+}else {
+emp = null;
+}
+} catch (Exception e) {
+e.printStackTrace();
+}
+return emp;
+}
+public String getMessage() {
+return message;
+}
+}
+
+Employee.java
+--------------
+package com.durgasoft.dto;
+
+public class Employee {
+private int eno;
+private String ename;
+private float esal;
+private String eaddr;
+
+public int getEno() {
+return eno;
+}
+public void setEno(int eno) {
+this.eno = eno;
+}
+public String getEname() {
+return ename;
+}
+public void setEname(String ename) {
+this.ename = ename;
+}
+public float getEsal() {
+return esal;
+}
+public void setEsal(float esal) {
+this.esal = esal;
+}
+public String getEaddr() {
+return eaddr;
+}
+public void setEaddr(String eaddr) {
+this.eaddr = eaddr;
+}
+}
+
+Test.java
+----------
+package com.durgasoft.test;
+
+import com.durgasoft.gui.PlayerFrame;
+
+public class Test {
+
+public static void main(String[] args) {
+PlayerFrame frame = new PlayerFrame();
+}
+}
